@@ -1,0 +1,40 @@
+:root { --ink:#10151f; --ink-soft:#3a4152; --muted:#6b7385; --border:#e2e6ed; --bg:#f8f9fb; --paper:#fff; --brand:#00785a; --brand-soft:#e6f4ef; --code:#101722; --sidebar:280px; }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { margin:0; background:var(--bg); color:var(--ink-soft); font:16px/1.7 "DM Sans",sans-serif; }
+.shell { display:grid; grid-template-columns:var(--sidebar) minmax(0,1fr); max-width:1440px; margin:auto; min-height:100vh; }
+.sidebar { position:sticky; top:0; height:100vh; overflow-y:auto; border-right:1px solid var(--border); padding:42px 30px; background:#fbfcfd; }
+.brand { display:flex; align-items:center; gap:8px; color:var(--ink); font:700 17px "Sora",sans-serif; text-decoration:none; margin:0 0 34px 2px; }
+.brand-dot { width:11px; height:11px; border-radius:50%; background:var(--brand); box-shadow:0 0 0 4px var(--brand-soft); }
+.nav-label { color:var(--muted); font:600 11px/1 "JetBrains Mono",monospace; letter-spacing:.09em; text-transform:uppercase; margin:25px 12px 10px; }
+nav a { display:block; border-radius:7px; color:var(--ink-soft); font-size:14px; font-weight:500; padding:7px 12px; text-decoration:none; }
+nav a:hover, nav a:focus { background:var(--brand-soft); color:#00503c; outline:none; }
+nav .endpoint-link { color:var(--muted); font:12px/1.45 "JetBrains Mono",monospace; padding:5px 12px 5px 22px; }
+.sidebar-note { border-top:1px solid var(--border); color:var(--muted); font-size:12px; margin:28px 0 0; padding:20px 8px; }
+main { min-width:0; padding:70px clamp(28px,6vw,88px) 100px; }
+.hero,.content-section { max-width:860px; margin:0 auto 76px; scroll-margin-top:32px; }
+.eyebrow { color:#00634a; font:600 12px "JetBrains Mono",monospace; letter-spacing:.1em; margin:0 0 15px; }
+h1,h2,h3 { color:var(--ink); font-family:"Sora",sans-serif; }
+h1 { font-size:clamp(30px,4vw,46px); letter-spacing:-.035em; line-height:1.16; margin:0 0 16px; }
+h2 { font-size:27px; letter-spacing:-.02em; margin:0; }
+h3 { font-size:18px; margin:0; }
+.lead { font-size:18px; max-width:720px; margin:0 0 25px; }
+.server-row { align-items:center; background:var(--paper); border:1px solid var(--border); border-radius:10px; display:flex; gap:14px; overflow:auto; padding:12px 15px; }
+.server-label,.method,.table-label { color:var(--muted); font:600 11px "JetBrains Mono",monospace; letter-spacing:.07em; }
+code,.endpoint-path { font-family:"JetBrains Mono",monospace; }
+.section-heading { align-items:baseline; display:flex; gap:13px; margin-bottom:26px; }
+.section-heading span { color:var(--brand); font:600 13px "JetBrains Mono",monospace; }
+.prose p { margin:0 0 13px; }
+.endpoint { background:var(--paper); border:1px solid var(--border); border-radius:12px; margin:0 0 28px; overflow:hidden; scroll-margin-top:22px; }
+.endpoint-top { background:var(--code); color:#fff; padding:21px 25px; }
+.method-line { align-items:center; display:flex; flex-wrap:wrap; gap:11px; }
+.method { background:#2454c7; border-radius:5px; color:#fff; padding:4px 8px; }
+.method.post { background:#057a5a; }.method.delete { background:#b42318; }.method.patch,.method.put { background:#ad6500; }
+.endpoint-path { font-size:14px; word-break:break-word; }.endpoint-summary { color:#cfd7e5; margin:8px 0 0; }
+.endpoint-body { padding:27px 25px; }.endpoint-description { margin:0 0 22px; }
+.table-label { display:block; margin:25px 0 10px; }
+.table-wrap { border:1px solid var(--border); border-radius:10px; overflow-x:auto; }
+table { border-collapse:collapse; min-width:620px; width:100%; } th,td { border-bottom:1px solid var(--border); padding:13px 15px; text-align:left; vertical-align:top; } tr:last-child td { border:0; } th { background:#fbfcfd; color:var(--muted); font:600 11px "JetBrains Mono",monospace; letter-spacing:.05em; text-transform:uppercase; } td { font-size:14px; } td code { color:var(--ink); font-size:12px; }.required { color:#00785a; font-weight:700; }.optional { color:var(--muted); }
+.schema,.code-sample { background:#f5f7fa; border:1px solid var(--border); border-radius:9px; color:#182131; display:block; font:12px/1.65 "JetBrains Mono",monospace; overflow:auto; padding:15px; white-space:pre; }
+.status { color:var(--brand); font:600 12px "JetBrains Mono",monospace; }.empty-state { border:1px dashed var(--border); border-radius:10px; color:var(--muted); padding:24px; }.mobile-header { display:none; }
+@media (max-width:800px) { .shell { display:block; }.sidebar { display:none; }.sidebar.open { display:block; position:fixed; z-index:5; width:280px; box-shadow:0 12px 40px #0017; }.mobile-header { align-items:center; display:flex; gap:12px; font:600 15px "Sora",sans-serif; margin:-34px 0 35px; }.mobile-header button { border:0; border-radius:6px; font-size:20px; padding:4px 9px; } main { padding:52px 20px 60px; }.hero,.content-section { margin-bottom:55px; }.endpoint-top,.endpoint-body { padding:19px; } }

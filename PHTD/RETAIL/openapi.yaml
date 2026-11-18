@@ -1,0 +1,1680 @@
+openapi: 3.0.3
+info:
+  title: PHTD Retail Website Connector API
+  version: 2.0.0
+  description: API server-to-server kết nối Website bán lẻ với Odoo 19. Bao gồm catalog,
+    giá/khuyến mãi, tồn kho, nội dung, khách hàng, đơn hàng, vận chuyển và bảo hành.
+servers:
+- url: https://erp.example.vn/api/v1/retail-website
+security:
+- bearerAuth: []
+  companyCode: []
+paths:
+  /health:
+    get:
+      summary: Kiểm tra kết nối
+      tags:
+      - System
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /categories:
+    get:
+      summary: Lấy cây danh mục Website
+      tags:
+      - Catalog
+      parameters:
+      - in: query
+        name: include_image
+        schema:
+          type: boolean
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /categories/{category_id}/display-config:
+    get:
+      summary: Cấu hình hiển thị danh mục
+      tags:
+      - Catalog
+      parameters:
+      - $ref: '#/components/parameters/CategoryId'
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /brands:
+    get:
+      summary: Danh sách thương hiệu
+      tags:
+      - Catalog
+      parameters:
+      - in: query
+        name: include_image
+        schema:
+          type: boolean
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /product-lines:
+    get:
+      summary: Danh sách dòng sản phẩm từ Nhóm hàng ERP
+      tags:
+      - Catalog
+      parameters:
+      - in: query
+        name: brand_id
+        schema:
+          type: integer
+      - in: query
+        name: include_image
+        schema:
+          type: boolean
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /products:
+    get:
+      summary: Danh sách sản phẩm có phân trang và bộ lọc
+      tags:
+      - Products
+      parameters:
+      - in: query
+        name: search
+        schema:
+          type: string
+      - in: query
+        name: category_id
+        schema:
+          type: integer
+      - in: query
+        name: brand_id
+        schema:
+          type: integer
+      - in: query
+        name: product_line_id
+        description: ID Nhóm hàng ERP (`product.template.parent_categ_id` / `product.category.id`)
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - selling
+          - out_of_stock
+          - coming_soon
+          - preorder
+          - discontinued
+      - in: query
+        name: in_stock
+        schema:
+          type: boolean
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /products/{product_id}:
+    get:
+      summary: Chi tiết sản phẩm
+      tags:
+      - Products
+      parameters:
+      - $ref: '#/components/parameters/ProductId'
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /products/{product_id}/variants:
+    get:
+      summary: Danh sách biến thể sản phẩm
+      tags:
+      - Products
+      parameters:
+      - $ref: '#/components/parameters/ProductId'
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /products/{product_id}/images:
+    get:
+      summary: Bộ ảnh sản phẩm dạng Base64
+      tags:
+      - Products
+      description: Dùng server-to-server và cache ảnh tại Website/CDN; không gọi trực
+        tiếp từ trình duyệt với API token.
+      parameters:
+      - $ref: '#/components/parameters/ProductId'
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /products/{product_id}/price:
+    get:
+      summary: Giá Website theo bảng giá
+      tags:
+      - Price & Promotion
+      parameters:
+      - $ref: '#/components/parameters/ProductId'
+      - in: query
+        name: variant_id
+        schema:
+          type: integer
+      - in: query
+        name: quantity
+        schema:
+          type: number
+          default: 1
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /promotions:
+    get:
+      summary: Danh sách chương trình khuyến mãi đang hiệu lực
+      tags:
+      - Price & Promotion
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /vouchers/validate:
+    post:
+      summary: Kiểm tra mã voucher
+      tags:
+      - Price & Promotion
+      description: Xác nhận mã, trạng thái, thời hạn và số dư. Mức giảm cuối cùng
+        được tính lại khi ERP tạo đơn.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - code
+              properties:
+                code:
+                  type: string
+                customer_id:
+                  type: integer
+                amount:
+                  type: number
+                lines:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/OrderLine'
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /products/{product_id}/combo:
+    get:
+      summary: Sản phẩm mua kèm/combo
+      tags:
+      - Price & Promotion
+      parameters:
+      - $ref: '#/components/parameters/ProductId'
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /installment-plans:
+    get:
+      summary: Danh sách gói trả góp
+      tags:
+      - Price & Promotion
+      parameters:
+      - in: query
+        name: amount
+        schema:
+          type: number
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /warehouses:
+    get:
+      summary: Danh sách kho Website
+      tags:
+      - Stock
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /products/{product_id}/stock-by-warehouse:
+    get:
+      summary: Tồn chi tiết theo kho và biến thể
+      tags:
+      - Stock
+      parameters:
+      - $ref: '#/components/parameters/ProductId'
+      - in: query
+        name: warehouse_code
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /products/stock:
+    get:
+      summary: Tồn nhanh theo SKU/barcode
+      tags:
+      - Stock
+      parameters:
+      - in: query
+        name: sku
+        schema:
+          type: string
+      - in: query
+        name: barcode
+        schema:
+          type: string
+      - in: query
+        name: warehouse_code
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /products/{product_id}/status:
+    get:
+      summary: Tình trạng bán và khả năng đặt trước
+      tags:
+      - Stock
+      parameters:
+      - $ref: '#/components/parameters/ProductId'
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /products/{product_id}/warranty-policy:
+    get:
+      summary: Chính sách bảo hành sản phẩm
+      tags:
+      - Stock
+      parameters:
+      - $ref: '#/components/parameters/ProductId'
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /banners:
+    get:
+      summary: Danh sách banner đang hiệu lực
+      tags:
+      - Content
+      parameters:
+      - in: query
+        name: placement
+        schema:
+          type: string
+      - in: query
+        name: category_id
+        schema:
+          type: integer
+      - in: query
+        name: include_image
+        schema:
+          type: boolean
+          default: true
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /content/pages:
+    get:
+      summary: Danh sách trang nội dung
+      tags:
+      - Content
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /content/pages/{slug}:
+    get:
+      summary: Chi tiết trang nội dung theo slug
+      tags:
+      - Content
+      parameters:
+      - in: path
+        name: slug
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /locations/provinces:
+    get:
+      summary: Danh sách tỉnh/thành từ res.country.state
+      tags:
+      - Locations
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /locations/districts:
+    get:
+      summary: Endpoint Quận/Huyện cũ (đã ngừng sử dụng)
+      deprecated: true
+      tags:
+      - Locations
+      parameters:
+      - in: query
+        name: province_code
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /locations/wards:
+    get:
+      summary: Danh sách phường/xã từ res.country.ward theo tỉnh/thành
+      tags:
+      - Locations
+      parameters:
+      - in: query
+        name: province_code
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /shipping/providers:
+    get:
+      summary: Danh sách đơn vị vận chuyển khả dụng
+      tags:
+      - Shipping
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /shipping/quote:
+    post:
+      summary: Báo phí vận chuyển và kho dự kiến
+      tags:
+      - Shipping
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderInput'
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /create-customer:
+    post:
+      summary: Tạo khách hàng
+      tags:
+      - Customers
+      description: Tạo khách hàng trong công ty xác định bởi API token và X-Company-Code. Name là bắt buộc; phone/mobile, nếu có, không được trùng sau khi chuẩn hóa trong cùng công ty.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerInput'
+      responses:
+        '201':
+          description: Tạo thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /create-customer-contact:
+    post:
+      summary: Tạo địa chỉ giao hàng hoặc xuất hóa đơn cho khách hàng
+      tags:
+      - Customers
+      description: Tạo liên hệ con (`res.partner`) cho khách hàng chỉ định bởi `customer_id`. `contact.type` chỉ chấp nhận `delivery` hoặc `invoice`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerContactInput'
+      responses:
+        '201':
+          description: Tạo thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: Dữ liệu hoặc nghiệp vụ không hợp lệ. Xem `CustomerContactErrorCode` để phân loại lỗi.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerContactErrorResponse'
+        '500':
+          description: Lỗi nội bộ ERP
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerContactErrorResponse'
+  /update-customer-contact:
+    post:
+      summary: Cập nhật địa chỉ giao hàng hoặc xuất hóa đơn của khách hàng
+      tags:
+      - Customers
+      description: Cập nhật một hoặc nhiều trường của liên hệ con, xác định bởi `customer_id` và `contact_id`. Chỉ cập nhật được liên hệ có type `delivery` hoặc `invoice` thuộc đúng khách hàng.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerContactUpdateInput'
+      responses:
+        '200':
+          description: Cập nhật thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: Dữ liệu hoặc nghiệp vụ không hợp lệ. Xem `CustomerContactErrorCode` để phân loại lỗi.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerContactErrorResponse'
+        '500':
+          description: Lỗi nội bộ ERP
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerContactErrorResponse'
+  /update-customer:
+    post:
+      summary: Cập nhật khách hàng
+      tags:
+      - Customers
+      description: Cập nhật một hoặc nhiều trường của khách hàng. Truyền customer_id (hoặc id) trong JSON body.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerUpdateInput'
+      responses:
+        '200':
+          description: Cập nhật thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /customers/{phone}:
+    get:
+      summary: Tra cứu khách hàng theo số điện thoại
+      tags:
+      - Customers
+      parameters:
+      - in: path
+        name: phone
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /customers/{customer_id}/orders:
+    get:
+      summary: Lịch sử đơn Website của khách hàng
+      tags:
+      - Customers
+      parameters:
+      - $ref: '#/components/parameters/CustomerId'
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /customers/{customer_id}/loyalty-points:
+    get:
+      summary: Điểm loyalty của khách hàng
+      tags:
+      - Customers
+      parameters:
+      - $ref: '#/components/parameters/CustomerId'
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /preview-order:
+    post:
+      summary: Preview khả năng tạo đơn, không ghi dữ liệu
+      tags:
+      - Orders
+      description: >-
+        Kiểm tra cùng payload của API tạo đơn, bao gồm sản phẩm, giới hạn mua, kho xử lý, tồn,
+        đặt trước, thanh toán, phí vận chuyển và tổng tiền. Response có `checkout_options`:
+        `promotions` trả các CTKM bán lẻ đang khả dụng cùng quyền lợi và SKU mua kèm (nếu có);
+        `trade_in_policies`, `vouchers`, `cross_sell_offers` hiện là mảng rỗng, sẵn sàng để ERP
+        bổ sung model/quy tắc sau này. API không tạo khách hàng, đơn hàng, buffer, giữ tồn hoặc
+        callback. Website dùng ID chương trình/reward trả về để gửi trong `promotions` khi gọi
+        `POST /orders`. Khi request có `promotions` hoặc `promotion_selections`, Preview áp dụng CTKM trên một transaction tạm và rollback ngay sau khi tính; response trả `promotions`, các reward/discount line và `amounts` sau chiết khấu. Khi order_id đã tồn tại, can_create=false và trả thông tin đơn hiện có.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderInput'
+      responses:
+        '200':
+          description: Preview thành công hoặc order_id đã tồn tại
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreviewOrderResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /einvoices/{invoice_id}/mobifone/issue-request:
+    post:
+      summary: Lấy dữ liệu HĐĐT để gửi sang MobiFone
+      tags:
+      - E-Invoices
+      description: >-
+        Chỉ nhận hóa đơn bán ra ở trạng thái draft hoặc posted. API trả dữ liệu người mua, dòng hàng,
+        thuế, tổng tiền và mã đối soát để hệ thống tích hợp gửi sang MobiFone. API không gọi luồng
+        action_retail_publish_einvoice, không gọi provider endpoint và không thay đổi trạng thái HĐĐT.
+      parameters:
+      - in: path
+        name: invoice_id
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: data chứa thông tin cần phát hành và reference_id để đối soát callback.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /einvoices/mobifone/callback:
+    post:
+      summary: Callback kết quả phát hành HĐĐT từ MobiFone
+      tags:
+      - E-Invoices
+      description: >-
+        Callback phải xác thực bằng Bearer token và X-Company-Code. Dùng reference_id (RefID),
+        erp_invoice_id hoặc transaction_id để đối soát đúng hóa đơn.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MobiFoneIssueCallback'
+      responses:
+        '200':
+          description: Callback đã được áp dụng hoặc được bỏ qua an toàn nếu hóa đơn đã phát hành.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /mobifone/issued-webhook:
+    post:
+      summary: Webhook cập nhật hóa đơn MobiFone đã phát hành
+      tags:
+      - E-Invoices
+      servers:
+      - url: https://erp.example.vn/api/v1/retail-einvoice
+        description: Endpoint thuộc module phtd_retail_einvoice, độc lập với API Website.
+      description: >-
+        MobiFone gọi endpoint này sau khi hóa đơn đã phát hành. ERP tìm account.move theo
+        mobifone_einvoice_hdon_id = id, cập nhật retail_einvoice_number và lưu PDF nếu payload
+        có file. PDF không bắt buộc. Có thể gửi JSON chứa PDF base64 hoặc multipart/form-data.
+      security:
+      - mobifoneEInvoiceApiKey: []
+      - bearerAuth: []
+      - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MobiFoneIssuedInvoiceWebhook'
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+              - id
+              properties:
+                id:
+                  type: string
+                  description: ID hóa đơn MobiFone, đối soát với mobifone_einvoice_hdon_id.
+                retail_einvoice_number:
+                  type: string
+                retail_einvoice_pdf:
+                  type: string
+                  format: binary
+                  description: PDF tùy chọn.
+                retail_einvoice_pdf_filename:
+                  type: string
+      responses:
+        '200':
+          description: Webhook đã được áp dụng.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /orders:
+    get:
+      summary: Tra danh sách đơn theo khách hàng hoặc số điện thoại
+      tags:
+      - Orders
+      parameters:
+      - in: query
+        name: customer_id
+        schema:
+          type: integer
+      - in: query
+        name: phone
+        schema:
+          type: string
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    post:
+      summary: Tạo đơn idempotent và áp dụng CTKM đã chọn
+      tags:
+      - Orders
+      description: >-
+        Website có thể truyền `promotions` lấy từ `checkout_options.promotions` của Preview đơn.
+        ERP kiểm tra lại điều kiện, coupon/voucher, reward và quy tắc kết hợp CTKM trước khi áp dụng.
+        Nếu bất kỳ CTKM nào không hợp lệ, request trả 422 và toàn bộ đơn được rollback. Response đơn
+        chứa danh sách `promotions` đã áp dụng, tổng tiền sau ưu đãi và `data.order.lines` với chi tiết sản phẩm.
+        Cấu trúc lines được trả cả cho request idempotent khi order_id đã tồn tại.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderInput'
+      responses:
+        '201':
+          description: Tạo mới
+        '200':
+          description: Đơn đã tồn tại
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /orders/{website_order_id}:
+    get:
+      summary: Tra cứu một đơn Website kèm danh sách sản phẩm
+      tags:
+      - Orders
+      description: >-
+        Response data có lines gồm SKU, tên, đơn vị, số lượng, đơn giá, chiết khấu, thuế,
+        thành tiền và cờ nhận diện phí giao hàng/quà tặng.
+      parameters:
+      - $ref: '#/components/parameters/WebsiteOrderId'
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /orders/{website_order_id}/tracking:
+    get:
+      summary: Tracking và lịch sử trạng thái đơn
+      tags:
+      - Orders
+      parameters:
+      - $ref: '#/components/parameters/WebsiteOrderId'
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /orders/{website_order_id}/payment:
+    post:
+      summary: Đồng bộ kết quả thanh toán đã xác thực
+      tags:
+      - Orders
+      description: Website là nguồn xác thực thanh toán/hoàn tiền; ERP chỉ ghi nhận
+        kết quả.
+      parameters:
+      - $ref: '#/components/parameters/WebsiteOrderId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payment:
+                  $ref: '#/components/schemas/Payment'
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /orders/{website_order_id}/cancel:
+    post:
+      summary: Hủy đơn
+      tags:
+      - Orders
+      parameters:
+      - $ref: '#/components/parameters/WebsiteOrderId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /orders/{website_order_id}/return:
+    post:
+      summary: Yêu cầu đổi/trả
+      tags:
+      - Orders
+      parameters:
+      - $ref: '#/components/parameters/WebsiteOrderId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /warranty/imei/{imei}:
+    get:
+      summary: Tra cứu bảo hành theo IMEI/Serial
+      tags:
+      - Warranty
+      parameters:
+      - in: path
+        name: imei
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /shipping/webhook/{provider_code}:
+    post:
+      summary: Webhook trạng thái hãng vận chuyển
+      security:
+      - webhookSignature: []
+        companyCode: []
+      - bearerAuth: []
+        companyCode: []
+      tags:
+      - Shipping
+      description: Ưu tiên HMAC SHA-256; nếu chưa có webhook secret thì bắt buộc Bearer
+        token.
+      parameters:
+      - in: path
+        name: provider_code
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    basicAuth:
+      type: http
+      scheme: basic
+    mobifoneEInvoiceApiKey:
+      type: apiKey
+      in: header
+      name: X-API-KEY
+    companyCode:
+      type: apiKey
+      in: header
+      name: X-Company-Code
+    webhookSignature:
+      type: apiKey
+      in: header
+      name: X-Signature
+  parameters:
+    CompanyCode:
+      in: header
+      name: X-Company-Code
+      required: true
+      schema:
+        type: string
+    RequestId:
+      in: header
+      name: X-Request-ID
+      required: false
+      schema:
+        type: string
+        format: uuid
+    Page:
+      in: query
+      name: page
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSize:
+      in: query
+      name: page_size
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 24
+    ProductId:
+      in: path
+      name: product_id
+      required: true
+      schema:
+        type: integer
+    CategoryId:
+      in: path
+      name: category_id
+      required: true
+      schema:
+        type: integer
+    CustomerId:
+      in: path
+      name: customer_id
+      required: true
+      schema:
+        type: integer
+    WebsiteOrderId:
+      in: path
+      name: website_order_id
+      required: true
+      schema:
+        type: string
+  responses:
+    Unauthorized:
+      description: Sai mã công ty hoặc API token
+    ValidationError:
+      description: Payload hoặc nghiệp vụ không hợp lệ
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        request_id:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+        error:
+          type: object
+          nullable: true
+    CustomerFields:
+      type: object
+      properties:
+        name:
+          type: string
+        full_name:
+          type: string
+        phone:
+          type: string
+        mobile:
+          type: string
+        email:
+          type: string
+          format: email
+        street:
+          type: string
+        address:
+          type: string
+        address_line:
+          type: string
+        street2:
+          type: string
+        address_line2:
+          type: string
+        city:
+          type: string
+        zip:
+          type: string
+        postal_code:
+          type: string
+        country_id:
+          type: integer
+        country_code:
+          type: string
+          example: VN
+        state_id:
+          type: integer
+    CustomerInput:
+      allOf:
+      - $ref: '#/components/schemas/CustomerFields'
+      - type: object
+        required:
+        - name
+    CustomerUpdateInput:
+      allOf:
+      - $ref: '#/components/schemas/CustomerFields'
+      - type: object
+        required:
+        - customer_id
+        properties:
+          customer_id:
+            type: integer
+          id:
+            type: integer
+    CustomerContactInput:
+      type: object
+      required:
+      - customer_id
+      - contact
+      properties:
+        customer_id:
+          type: integer
+          description: ID của khách hàng cha trong Odoo
+        contact:
+          allOf:
+          - $ref: '#/components/schemas/CustomerFields'
+          - type: object
+            required:
+            - name
+            - type
+            properties:
+              type:
+                type: string
+                description: Loại địa chỉ liên hệ
+                enum:
+                - delivery
+                - invoice
+    CustomerContactErrorCode:
+      type: string
+      description: Mã lỗi chi tiết của API tạo/cập nhật liên hệ khách hàng. Các mã là chuỗi số để Website log và phân loại lỗi.
+      enum:
+      - '0' # JSON không hợp lệ
+      - '1' # customer_id không hợp lệ
+      - '2' # thiếu customer_id
+      - '3' # không tìm thấy khách hàng
+      - '4' # contact payload không hợp lệ
+      - '5' # type không hợp lệ
+      - '6' # thiếu tên liên hệ
+      - '7' # số điện thoại không hợp lệ
+      - '8' # country_id không hợp lệ
+      - '9' # không tìm thấy quốc gia
+      - '10' # state_id không hợp lệ
+      - '11' # tạo contact thất bại
+      - '12' # không được xác thực
+      - '13' # lỗi nội bộ
+      - '14' # contact_id không hợp lệ
+      - '15' # thiếu contact_id
+      - '16' # không tìm thấy contact của khách hàng
+      - '17' # không có trường để cập nhật
+      - '18' # cập nhật contact thất bại
+    CustomerContactUpdateInput:
+      type: object
+      required:
+      - customer_id
+      - contact_id
+      - contact
+      properties:
+        customer_id:
+          type: integer
+          description: ID của khách hàng cha trong Odoo
+        contact_id:
+          type: integer
+          description: ID của liên hệ `delivery` hoặc `invoice` cần cập nhật
+        contact:
+          allOf:
+          - $ref: '#/components/schemas/CustomerFields'
+          - type: object
+            properties:
+              type:
+                type: string
+                description: Chỉ truyền khi cần đổi loại địa chỉ
+                enum:
+                - delivery
+                - invoice
+    CustomerContactErrorResponse:
+      allOf:
+      - $ref: '#/components/schemas/ApiResponse'
+      - type: object
+        properties:
+          error:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                $ref: '#/components/schemas/CustomerContactErrorCode'
+              message:
+                type: string
+    OrderLine:
+      type: object
+      required:
+      - quantity
+      properties:
+        line_id:
+          type: string
+        product_id:
+          type: integer
+        sku:
+          type: string
+        barcode:
+          type: string
+        name:
+          type: string
+        quantity:
+          type: number
+          exclusiveMinimum: 0
+        unit_price:
+          type: number
+        discount:
+          type: number
+          minimum: 0
+          maximum: 100
+    Payment:
+      type: object
+      properties:
+        method:
+          type: string
+          enum:
+          - cod
+          - bank_transfer
+          - ewallet
+          - installment
+          - online
+          - other
+        status:
+          type: string
+          enum:
+          - pending
+          - authorized
+          - paid
+          - failed
+          - cod_pending
+          - cod_collected
+          - refund_pending
+          - refunded
+        gateway:
+          type: string
+        transaction_id:
+          type: string
+    Shipping:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        address:
+          type: string
+        province_code:
+          type: string
+        district_code:
+          type: string
+          deprecated: true
+          description: Chỉ dùng cho payload cũ; địa chỉ mới không cần Quận/Huyện.
+        ward_code:
+          type: string
+        warehouse_code:
+          type: string
+        provider_code:
+          type: string
+        service_code:
+          type: string
+        fee:
+          type: number
+        cod_fee:
+          type: number
+        insurance_fee:
+          type: number
+        insurance_amount:
+          type: number
+        note:
+          type: string
+    OrderInput:
+      type: object
+      required:
+      - lines
+      properties:
+        order_id:
+          type: string
+        source:
+          type: string
+        customer:
+          type: object
+          properties:
+            name:
+              type: string
+            phone:
+              type: string
+            email:
+              type: string
+        lines:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/OrderLine'
+        payment:
+          $ref: '#/components/schemas/Payment'
+        shipping:
+          $ref: '#/components/schemas/Shipping'
+        packaging_note:
+          type: string
+        promotions:
+          type: array
+          description: >-
+            CTKM Website đã chọn. Preview dùng danh sách này để tính lại dòng thưởng/chiết khấu
+            và amounts; khi tạo đơn ERP kiểm tra lại toàn bộ điều kiện.
+          items:
+            $ref: '#/components/schemas/PromotionSelection'
+        promotion_selections:
+          type: array
+          deprecated: true
+          description: Tên trường tương thích của promotions.
+          items:
+            $ref: '#/components/schemas/PromotionSelection'
+    PreviewOrderResponse:
+      allOf:
+      - $ref: '#/components/schemas/ApiResponse'
+      - type: object
+        properties:
+          data:
+            $ref: '#/components/schemas/PreviewOrderData'
+    PreviewOrderData:
+      type: object
+      properties:
+        can_create:
+          type: boolean
+        reason:
+          type: string
+          description: Có giá trị order_already_exists khi order_id đã tồn tại.
+        order_id:
+          type: string
+        order:
+          type: object
+          description: Thông tin đơn hiện có khi can_create=false.
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/PreviewOrderLine'
+        promotions:
+          type: array
+          description: CTKM đã được áp dụng trên đơn tạm.
+          items:
+            $ref: '#/components/schemas/AppliedPromotion'
+        amounts:
+          $ref: '#/components/schemas/PreviewAmounts'
+        checkout_options:
+          type: object
+          description: Các CTKM và lựa chọn checkout còn khả dụng cho cart hiện tại.
+    PreviewOrderLine:
+      type: object
+      properties:
+        line_id:
+          type: string
+          nullable: true
+        product_id:
+          type: integer
+        sku:
+          type: string
+        name:
+          type: string
+        quantity:
+          type: number
+        unit_price:
+          type: number
+        discount:
+          type: number
+        subtotal:
+          type: number
+        total:
+          type: number
+        is_shipping_fee:
+          type: boolean
+        is_reward_line:
+          type: boolean
+        reward_id:
+          type: integer
+          nullable: true
+    AppliedPromotion:
+      type: object
+      properties:
+        program_id:
+          type: integer
+        program_code:
+          type: string
+        program_name:
+          type: string
+        reward_ids:
+          type: array
+          items:
+            type: integer
+        benefit_amount:
+          type: number
+    PreviewAmounts:
+      type: object
+      properties:
+        untaxed:
+          type: number
+        tax:
+          type: number
+        total:
+          type: number
+        currency:
+          type: string
+    MobiFoneIssueCallback:
+      type: object
+      description: Kết quả phát hành do MobiFone gửi lại cho ERP.
+      properties:
+        erp_invoice_id:
+          type: integer
+          description: ID account.move do ERP trả về khi gửi yêu cầu.
+        reference_id:
+          type: string
+          description: Mã đối soát ERP trả về; tương ứng RefID trong payload MobiFone/MISA.
+        transaction_id:
+          type: string
+        status:
+          type: string
+          enum:
+          - issued
+          - published
+          - success
+          - completed
+          - sent
+          - pending
+          - processing
+          - error
+          - failed
+          - rejected
+        invoice_number:
+          type: string
+        invoice_series:
+          type: string
+        invoice_code:
+          type: string
+        error_message:
+          type: string
+    MobiFoneIssuedInvoiceWebhook:
+      type: object
+      required:
+      - id
+      properties:
+        id:
+          type: string
+          description: ID hóa đơn MobiFone; ERP tra cứu account.move.mobifone_einvoice_hdon_id.
+          example: df7f6b27-45a3-44d3-ba30-f3c1e929b0d3
+        retail_einvoice_number:
+          type: string
+          description: Số hóa đơn điện tử đã phát hành.
+          example: '00001234'
+        retail_einvoice_pdf:
+          type: string
+          format: byte
+          description: File PDF tùy chọn, mã hóa base64; cũng chấp nhận key pdf, pdf_base64 hoặc file_pdf.
+        retail_einvoice_pdf_filename:
+          type: string
+          example: HD_00001234.pdf
+    PromotionSelection:
+      type: object
+      description: Gửi program_id hoặc retail_code để xác định CTKM. Khi gửi cả hai, ERP ưu tiên program_id.
+      anyOf:
+      - required:
+        - program_id
+      - required:
+        - retail_code
+      properties:
+        program_id:
+          type: integer
+          description: ID chương trình trong checkout_options.promotions.
+        retail_code:
+          type: string
+          description: Mã CTKM (retail_code), dùng thay thế cho program_id.
+        reward_ids:
+          type: array
+          description: >-
+            ID reward đã chọn. Bắt buộc với CTKM choose_one; apply_all tự áp dụng toàn bộ reward;
+            choose_multiple tự lấy reward bắt buộc nếu không truyền.
+          items:
+            type: integer
+          uniqueItems: true
+        coupon_code:
+          type: string
+          description: Mã coupon/voucher, khi CTKM yêu cầu.
+        voucher_code:
+          type: string
+          deprecated: true
+          description: Tên tương thích của coupon_code.
