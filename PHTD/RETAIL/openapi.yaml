@@ -1396,6 +1396,17 @@ components:
         quantity:
           type: number
           exclusiveMinimum: 0
+        imeis:
+          type: array
+          description: >-
+            Danh sách IMEI/serial đã được gắn cho dòng sản phẩm trên đơn ERP.
+            Trường này có trong payload đồng bộ hoặc webhook đơn hàng từ ERP;
+            trả về mảng rỗng khi sản phẩm không quản lý serial hoặc chưa được gắn IMEI.
+          items:
+            type: string
+          example:
+          - '356789012345678'
+          - '356789012345679'
         unit_price:
           type: number
         discount:
